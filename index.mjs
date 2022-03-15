@@ -53,29 +53,34 @@ const stdlib = loadStdlib(process.env);
 
     interact.predictAmount = async () => {
         const prediction = await ask('How many fingers you think there will be in total?', x => {
-            if(isNaN(x)){
+            if(isNaN(Number(x))){
                 throw Error(`${x} is not a number!`)
             }
 
             return x;
         })
 
-        console.log(`You predicted ${prediction } fingers in total`);
+        console.log(`You predicted ${prediction} fingers in total`);
         return Number(prediction);
     };
 
     interact.seeOutcome = async (outcome) => {
         const result = OUTCOME[outcome];
-        console.log(result)
+        console.log(result);
     }
 
     interact.informTimeout = async () => {
         console.log('Application time out!')
+        process.exit(1);
     }
 
     if (isAlice) {
         interact.wager = await ask('How much do you want to bet?', stdlib.parseCurrency);
-        const deadline = {ETH: 100, ALGO: 4, CFX: 1000}[stdlib.connector];
+        const deadline = {
+            ETH: 100,
+            ALGO: 4,
+            CFX: 1000,
+        }[stdlib.connector];
         interact.deadline = deadline;
     } else {
         // Bob's interact object
