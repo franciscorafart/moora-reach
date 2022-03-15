@@ -69,8 +69,14 @@ const stdlib = loadStdlib(process.env);
         console.log(result)
     }
 
+    interact.informTimeout = async () => {
+        console.log('Application time out!')
+    }
+
     if (isAlice) {
         interact.wager = await ask('How much do you want to bet?', stdlib.parseCurrency);
+        const deadline = {ETH: 100, ALGO: 4, CFX: 1000}[stdlib.connector];
+        interact.deadline = deadline;
     } else {
         // Bob's interact object
         interact.acceptWager = async amt => {

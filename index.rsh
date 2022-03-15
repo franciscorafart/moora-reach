@@ -5,6 +5,7 @@ const Player = {
     chooseFinger: Fun([], UInt),
     predictAmount: Fun([], UInt),
     seeOutcome: Fun([UInt], Null),
+    informTimeout: Fun([], Null),
 };
 
 const [ isFinger, ZERO, ONE, TWO, THREE, FOUR, FIVE ] = makeEnum(6);
@@ -38,6 +39,7 @@ export const main = Reach.App(() => {
     const Alice = Participant('Alice', {
         ...Player,
         wager: UInt,
+        deadline: UInt,
     });
 
     const Bob = Participant('Bob', {
@@ -46,27 +48,45 @@ export const main = Reach.App(() => {
     });
     init();
 
+    const informTimeout = () => {
+        each([Alice, Bob], () => {
+            interact.informTimeout();
+        });
+    };
+
     Alice.only(() => {
         const wager = declassify(interact.wager);
+        const deadline = declassify(interact.deadline);
+    });
+    
+    Alice.publish(wager, deadline).pay(wager);
+    commit();
+    
+    Bob.only(() => {
+        interact.acceptWager(wager);
+    });
 
+    Bob.pay(wager).timeout(relativeTime(deadline), () => closeTo(Alice, informTimeout));
+    commit();
+
+    // Insert another step
+    Alice.only(() => {
         const _aliceFinger = interact.chooseFinger();
         const _alicePrediction = interact.predictAmount();
-
+        
         const [_aliceFingerCommit, _aliceFingerSalt] = makeCommitment(interact, _aliceFinger);
         const [_alicePredictionCommit, _alicePredictionSalt] = makeCommitment(interact, _alicePrediction);
-
+        
         const aliceFingerCommit = declassify(_aliceFingerCommit);
         const alicePredictionCommit = declassify(_alicePredictionCommit);
     });
-    
-    Alice.publish(wager, aliceFingerCommit, alicePredictionCommit).pay(wager);
+
+    Alice.publish(aliceFingerCommit, alicePredictionCommit).timeout(relativeTime(deadline), () => closeTo(Bob, informTimeout));; // timeout
     commit();
-    
+
     unknowable(Bob, Alice(_aliceFinger, _aliceFingerSalt, _alicePrediction, _alicePredictionSalt));
-
+    
     Bob.only(() => {
-        interact.acceptWager(wager);
-
         const _bobFinger = interact.chooseFinger();
         const _bobPrediction = interact.predictAmount();
 
@@ -77,7 +97,7 @@ export const main = Reach.App(() => {
         const bobPredictionCommit = declassify(_bobPredictionCommit);
     });
 
-    Bob.publish(bobPredictionCommit, bobFingerCommit).pay(wager);
+    Bob.publish(bobPredictionCommit, bobFingerCommit).timeout(relativeTime(deadline), () => closeTo(Alice, informTimeout));
     commit();
 
     unknowable(Alice, Bob(_bobFinger, _bobFingerSalt, _bobPrediction, _bobPredictionSalt));
@@ -90,7 +110,7 @@ export const main = Reach.App(() => {
         const alicePredictionSalt = declassify(_alicePredictionSalt);
     });
 
-    Alice.publish(aliceFinger, aliceFingerSalt, alicePrediction, alicePredictionSalt);
+    Alice.publish(aliceFinger, aliceFingerSalt, alicePrediction, alicePredictionSalt).timeout(relativeTime(deadline), () => closeTo(Bob, informTimeout));
     checkCommitment(aliceFingerCommit, aliceFingerSalt, aliceFinger);
     commit();
     
@@ -102,7 +122,7 @@ export const main = Reach.App(() => {
         const bobPredictionSalt = declassify(_bobPredictionSalt);
     });
 
-    Bob.publish(bobFinger, bobFingerSalt, bobPrediction, bobPredictionSalt);
+    Bob.publish(bobFinger, bobFingerSalt, bobPrediction, bobPredictionSalt).timeout(relativeTime(deadline), () => closeTo(Alice, informTimeout));
 
     checkCommitment(bobFingerCommit, bobFingerSalt, bobFinger);
     checkCommitment(bobPredictionCommit, bobPredictionSalt, bobPrediction);
