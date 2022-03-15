@@ -15,8 +15,8 @@ const [ isOutcome, A_WINS, B_WINS, DRAW] = makeEnum(3);
 const winner = (fingerA, predictionA, fingerB, predictionB) => {
     const fingersTotal = fingerA + fingerB;
 
-    const guessedA = predictionA - fingersTotal == 0;
-    const guessedB = predictionB - fingersTotal == 0;
+    const guessedA = predictionA == fingersTotal;
+    const guessedB = predictionB == fingersTotal;
 
     if (guessedA == guessedB) {
         return DRAW;
@@ -35,7 +35,6 @@ assert(winner(TWO, P_FOUR, TWO, P_SEVEN) == A_WINS);
 // Forall?
 
 export const main = Reach.App(() => {
-    // TODO: Can in be implemented for n amount of players?
     const Alice = Participant('Alice', {
         ...Player,
         wager: UInt,
@@ -131,7 +130,6 @@ export const main = Reach.App(() => {
         
         checkCommitment(bobFingerCommit, bobFingerSalt, bobFinger);
         checkCommitment(bobPredictionCommit, bobPredictionSalt, bobPrediction);
-        // commit();
         
         outcome = winner(aliceFinger, alicePrediction, bobFinger, bobPrediction);
         continue;

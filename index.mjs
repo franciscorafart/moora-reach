@@ -33,15 +33,15 @@ const stdlib = loadStdlib(process.env);
     const before = await getBalance();
     console.log(`Your balance is ${before}`);
 
-    const validateFingers = f => ['1', '2', '3', '4', '5'].includes(f);
+    const validateFingers = f => ['0', '1', '2', '3', '4', '5'].includes(f);
     const interact = {...stdlib.hasRandom}
 
     interact.chooseFinger = async () => {
-        const finger = await ask('Show your fingers! (1 to 5)', x => {
+        const finger = await ask('Show your fingers! (0 to 5)', x => {
             const validChoice = validateFingers(x);
 
             if(!validChoice) {
-                throw Error(`${x} is an invalid choice. Choose from 1 to 5`);
+                throw Error(`${x} is an invalid choice. Choose from 0 to 5`);
             }
 
             return x
@@ -53,6 +53,7 @@ const stdlib = loadStdlib(process.env);
 
     interact.predictAmount = async () => {
         const prediction = await ask('How many fingers you think there will be in total?', x => {
+            console.log('raw x', x, 'type', typeof x)
             if(isNaN(Number(x))){
                 throw Error(`${x} is not a number!`)
             }
